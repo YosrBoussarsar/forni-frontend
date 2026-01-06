@@ -1,0 +1,333 @@
+import React, { useEffect, useState } from "react";
+import { userApi } from "../api/userApi";
+import Layout from "../components/Layout";
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  CircularProgress,
+  Paper,
+  Grid,
+  Alert,
+  Snackbar,
+  Avatar,
+  Divider,
+  Card,
+  CardContent,
+} from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+
+export default function Profile() {
+  const [profile, setProfile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Please log in to view your profile");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    userApi
+      .getProfile()
+      .then((res) => {
+        console.log("Profile data received:", res.data);
+        setProfile(res.data);
+        setLoading(false);
+        setError("");
+      })
+      .catch((err) => {
+        console.error("Error loading profile:", err);
+        console.error("Error response:", err.response);
+        
+        // Check for authentication errors
+        if (err.response?.status === 401 || err.response?.status === 422) {
+          setError("Your session has expired. Please log in again.");
+          localStorage.removeItem("token");
+        } else {
+          let errorMsg = "Failed to load profile. Please try again.";
+          
+          if (err.response?.data) {
+            if (typeof err.response.data === 'string') {
+              errorMsg = err.response.data;
+            } else if (err.response.data.message) {
+              errorMsg = err.response.data.message;
+            } else if (err.response.data.msg) {
+              errorMsg = err.response.data.msg;
+            }
+          } else if (err.message) {
+            errorMsg = err.message;
+          }
+          
+          setError(String(errorMsg));
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const handleChange = (e) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = () => {
+    setSaving(true);
+    setError("");
+    userApi
+      .updateProfile(profile)
+      .then(() => {
+        setSaving(false);
+        setSuccessMsg("Profile updated successfully!");
+      })
+      .catch((err) => {
+        console.error("Error updating profile:", err);
+        let errorMsg = "Failed to update profile";
+        if (err.response?.data?.message) {
+          errorMsg = err.response.data.message;
+        }
+        setError(String(errorMsg));
+        setSaving(false);
+      });
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
+          <CircularProgress size={60} />
+          <Typography sx={{ mt: 2 }}>Loading profile...</Typography>
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (error && !profile) {
+    return (
+      <Layout>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Alert severity="error" sx={{ maxWidth: 500, mb: 2 }}>
+            {error}
+          </Alert>
+          <Button 
+            variant="contained" 
+            onClick={() => window.location.href = "/login"}
+          >
+            Go to Login
+          </Button>
+        </Box>
+      </Layout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Layout>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
+          <Typography>No profile data available</Typography>
+          <Button 
+            variant="contained" 
+            sx={{ mt: 2 }}
+            onClick={() => window.location.reload()}
+          >
+            Reload
+          </Button>
+        </Box>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <Box sx={{ maxWidth: 1000, mx: "auto", py: 4 }}>
+        <Typography variant="h4" sx={{ mb: 3, fontWeight: "bold" }}>
+          My Profile
+        </Typography>
+
+        <Grid container spacing={3}>
+          {/* Profile Summary Card */}
+          <Grid item xs={12} md={4}>
+            <Card elevation={3}>
+              <CardContent sx={{ textAlign: "center", py: 4 }}>
+                <Avatar
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    mx: "auto",
+                    mb: 2,
+                    bgcolor: "primary.main",
+                    fontSize: 40,
+                  }}
+                >
+                  {profile.first_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+                </Avatar>
+                <Typography variant="h5" gutterBottom>
+                  {profile.first_name || ""} {profile.last_name || ""}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {profile.email || ""}
+                </Typography>
+                <Box
+                  sx={{
+                    mt: 2,
+                    px: 2,
+                    py: 0.5,
+                    bgcolor: profile.role === "admin" ? "error.light" : 
+                            profile.role === "bakery_owner" ? "warning.light" : "success.light",
+                    borderRadius: 2,
+                    display: "inline-block",
+                  }}
+                >
+                  <Typography variant="caption" sx={{ textTransform: "capitalize", fontWeight: "bold" }}>
+                    {profile.role?.replace("_", " ") || "customer"}
+                  </Typography>
+                </Box>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="body2" color="text.secondary">
+                  Member since {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : "N/A"}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Profile Edit Form */}
+          <Grid item xs={12} md={8}>
+            <Paper elevation={3} sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3 }}>
+                Personal Information
+              </Typography>
+
+              {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {error}
+                </Alert>
+              )}
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    name="first_name"
+                    value={profile.first_name || ""}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: <PersonIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    name="last_name"
+                    value={profile.last_name || ""}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: <PersonIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    value={profile.email || ""}
+                    disabled
+                    InputProps={{
+                      startAdornment: <EmailIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                    helperText="Email cannot be changed"
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Phone Number"
+                    name="phone"
+                    value={profile.phone || ""}
+                    onChange={handleChange}
+                    placeholder="12345678"
+                    InputProps={{
+                      startAdornment: <PhoneIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                    helperText="8 digits phone number"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Latitude"
+                    name="latitude"
+                    type="number"
+                    value={profile.latitude || ""}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: <LocationOnIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Longitude"
+                    name="longitude"
+                    type="number"
+                    value={profile.longitude || ""}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: <LocationOnIcon sx={{ mr: 1, color: "action.active" }} />,
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => window.location.reload()}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleSave}
+                      disabled={saving}
+                      size="large"
+                    >
+                      {saving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Snackbar
+        open={!!successMsg}
+        autoHideDuration={4000}
+        onClose={() => setSuccessMsg("")}
+      >
+        <Alert severity="success" onClose={() => setSuccessMsg("")}>
+          {successMsg}
+        </Alert>
+      </Snackbar>
+    </Layout>
+  );
+}
