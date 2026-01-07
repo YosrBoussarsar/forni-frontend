@@ -13,12 +13,17 @@ import {
   InputAdornment,
   alpha,
   useTheme,
+  ToggleButton,
+  ToggleButtonGroup,
+  Paper,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import LockIcon from "@mui/icons-material/Lock";
 import StorefrontIcon from "@mui/icons-material/Storefront";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import BakeryDiningIcon from "@mui/icons-material/BakeryDining";
 
 export default function Register() {
   const { login } = useContext(AuthContext);
@@ -31,13 +36,29 @@ export default function Register() {
     first_name: "",
     last_name: "",
     phone: "",
+    role: "customer", // Default to customer
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await authApi.register(form);
-    login(res.data.access_token);
-    navigate("/dashboard");
+    const token = res.data.access_token;
+    
+    // Get user data from response or decode token
+    const userData = res.data.user || {
+      email: form.email,
+      role: form.role,
+      name: `${form.first_name} ${form.last_name}`,
+    };
+    
+    login(token, userData);
+    
+    // Redirect based on role
+    if (form.role === 'bakery_owner') {
+      navigate("/bakery-dashboard");
+    } else {
+      navigate("/customer-dashboard");
+    }
   };
 
   return (
@@ -90,6 +111,55 @@ export default function Register() {
               Create your account and start saving food
             </Typography>
           </Box>
+
+          {/* Role Selection */}
+          <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: "grey.50", borderRadius: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, textAlign: "center" }}>
+              I want to register as:
+            </Typography>
+            <ToggleButtonGroup
+              value={form.role}
+              exclusive
+              onChange={(e, newRole) => {
+                if (newRole !== null) {
+                  setForm({ ...form, role: newRole });
+                }
+              }}
+              fullWidth
+              sx={{ 
+                '& .MuiToggleButton-root': {
+                  py: 1.5,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  '&.Mui-selected': {
+                    bgcolor: theme.palette.primary.main,
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: theme.palette.primary.dark,
+                    },
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="customer">
+                <ShoppingCartIcon sx={{ mr: 1 }} />
+                Customer
+              </ToggleButton>
+              <ToggleButton value="bakery_owner">
+                <BakeryDiningIcon sx={{ mr: 1 }} />
+                Bakery Owner
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              sx={{ display: 'block', mt: 1, textAlign: 'center' }}
+            >
+              {form.role === 'customer' 
+                ? '🛒 Browse bakeries and buy surplus bags' 
+                : '🥖 Manage your bakery and reduce food waste'}
+            </Typography>
+          </Paper>
 
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>

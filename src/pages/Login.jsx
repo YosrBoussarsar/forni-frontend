@@ -11,11 +11,22 @@ import {
   Button,
   Typography,
   Alert,
+  InputAdornment,
+  alpha,
+  useTheme,
+  Paper,
+  Chip,
 } from "@mui/material";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import BakeryDiningIcon from "@mui/icons-material/BakeryDining";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const [form, setForm] = useState({
     email: "",
@@ -114,12 +125,76 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", mt: 10 }}>
-      <Card sx={{ width: 400, p: 2 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 50%, ${theme.palette.secondary.dark} 100%)`,
+        py: 4,
+      }}
+    >
+      <Card
+        elevation={12}
+        sx={{
+          width: 450,
+          p: 4,
+          borderRadius: 4,
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+        }}
+      >
         <CardContent>
-          <Typography variant="h5" sx={{ mb: 2 }}>
-            Login to Forni
-          </Typography>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Box
+              sx={{
+                display: "inline-flex",
+                p: 2,
+                borderRadius: "50%",
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                mb: 2,
+              }}
+            >
+              <StorefrontIcon sx={{ fontSize: 48, color: "white" }} />
+            </Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                mb: 1,
+              }}
+            >
+              Welcome to Forni
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Login to access your account
+            </Typography>
+          </Box>
+
+          {/* User Type Info */}
+          <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: "grey.50", borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Chip 
+                icon={<ShoppingCartIcon />} 
+                label="Customer" 
+                size="small"
+                sx={{ bgcolor: 'white' }}
+              />
+              <Chip 
+                icon={<BakeryDiningIcon />} 
+                label="Bakery Owner" 
+                size="small"
+                sx={{ bgcolor: 'white' }}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
+              Login with your credentials - you'll be directed to the right dashboard
+            </Typography>
+          </Paper>
 
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -135,6 +210,13 @@ export default function Login() {
               margin="normal"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <TextField
@@ -144,25 +226,51 @@ export default function Login() {
               margin="normal"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <Button
               fullWidth
               variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
+              size="large"
               type="submit"
+              sx={{
+                mt: 3,
+                py: 1.5,
+                fontSize: "1.1rem",
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                "&:hover": {
+                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                  boxShadow: `0 6px 24px ${alpha(theme.palette.primary.main, 0.5)}`,
+                },
+              }}
             >
               Login
             </Button>
           </form>
 
-          <Typography variant="body2" sx={{ mt: 2 }}>
-            Don’t have an account?{" "}
-            <Link to="/register" style={{ color: "#D35400" }}>
-              Register here
-            </Link>
-          </Typography>
+          <Box sx={{ mt: 3, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                style={{
+                  color: theme.palette.primary.main,
+                  textDecoration: "none",
+                  fontWeight: 600,
+                }}
+              >
+                Register here
+              </Link>
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
     </Box>
