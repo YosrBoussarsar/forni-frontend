@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { orderApi } from "../api/orderApi";
-import Layout from "../components/Layout";
+import { AuthContext } from "../context/AuthContext";
+import CustomerLayout from "../components/CustomerLayout";
+import BakeryOwnerLayout from "../components/BakeryOwnerLayout";
 import {
   Box,
   Card,
@@ -20,6 +22,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 
 export default function Orders() {
+  const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -87,17 +90,20 @@ export default function Orders() {
   };
 
   if (loading) {
+    const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
     return (
-      <Layout>
+      <LayoutComponent>
         <Box display="flex" justifyContent="center" mt={5}>
           <CircularProgress />
         </Box>
-      </Layout>
+      </LayoutComponent>
     );
   }
 
+  const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
+
   return (
-    <Layout>
+    <LayoutComponent>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ mb: 1, fontWeight: "bold" }}>
           My Orders
@@ -233,6 +239,6 @@ export default function Orders() {
           })}
         </Grid>
       )}
-    </Layout>
+    </LayoutComponent>
   );
 }

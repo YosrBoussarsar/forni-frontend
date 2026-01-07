@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { recommendationsApi } from "../api/recommendationsApi";
-import Layout from "../components/Layout";
+import CustomerLayout from "../components/CustomerLayout";
 import {
   Grid,
   Card,
@@ -26,7 +26,7 @@ export default function Recommendations() {
 
 
   return (
-    <Layout>
+    <CustomerLayout>
       <Typography variant="h4" sx={{ mb: 3 }}>
         Recommended Surprise Bags
       </Typography>
@@ -47,6 +47,6 @@ export default function Recommendations() {
           </Grid>
         ))}
       </Grid>
-    </Layout>
+    </CustomerLayout>
   );
 }

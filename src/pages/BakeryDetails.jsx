@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { reviewApi } from "../api/reviewApi";
 import { CartContext } from "../context/CartContext";
-import Layout from "../components/Layout";
+import CustomerLayout from "../components/CustomerLayout";
 import {
   Box,
   Typography,
@@ -191,26 +191,26 @@ export default function BakeryDetails() {
 
   if (loading) {
     return (
-      <Layout>
+      <CustomerLayout>
         <Box display="flex" justifyContent="center" mt={5}>
           <CircularProgress />
         </Box>
-      </Layout>
+      </CustomerLayout>
     );
   }
 
   if (!bakery) {
     return (
-      <Layout>
+      <CustomerLayout>
         <Typography variant="h6" color="error">
           Bakery not found.
         </Typography>
-      </Layout>
+      </CustomerLayout>
     );
   }
 
   return (
-    <Layout>
+    <CustomerLayout>
       <Box sx={{ mb: 4 }}>
         <Typography
           variant="h3"
@@ -596,6 +596,6 @@ export default function BakeryDetails() {
           </Box>
         )}
       </Box>
-    </Layout>
+    </CustomerLayout>
   );
 }

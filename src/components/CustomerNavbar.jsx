@@ -7,8 +7,10 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import RecommendIcon from "@mui/icons-material/Recommend";
 
-export default function Navbar() {
+export default function CustomerNavbar() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { logout, user } = useContext(AuthContext);
@@ -19,19 +21,6 @@ export default function Navbar() {
     logout();
     navigate("/");
   };
-
-  // Determine dashboard link based on user role
-  const getDashboardLink = () => {
-    if (!user) return "/dashboard";
-    if (user.role === "admin") return "/admin-dashboard";
-    if (user.role === "bakery_owner") return "/bakery-dashboard";
-    return "/customer-dashboard";
-  };
-
-  // Determine which navigation items to show based on role
-  const showCustomerNav = !user || user.role === "customer" || user.role === "admin";
-  const showBakeryNav = user?.role === "bakery_owner" || user?.role === "admin";
-  const showAdminNav = user?.role === "admin";
 
   return (
     <AppBar 
@@ -50,7 +39,7 @@ export default function Navbar() {
             <Typography 
               variant="h5" 
               component={Link}
-              to={getDashboardLink()}
+              to="/customer-dashboard"
               sx={{ 
                 fontWeight: 700,
                 background: "linear-gradient(45deg, #FFF 30%, #FFE5CC 90%)",
@@ -68,90 +57,74 @@ export default function Navbar() {
             <Button 
               color="inherit" 
               component={Link} 
-              to={getDashboardLink()}
+              to="/customer-dashboard"
               sx={{ 
                 "&:hover": { 
                   bgcolor: alpha(theme.palette.common.white, 0.15),
                 }
               }}
             >
-              Dashboard
+              Home
             </Button>
-            
-            {showCustomerNav && (
-              <>
-                <Button 
-                  color="inherit" 
-                  component={Link} 
-                  to="/bakeries"
-                  sx={{ 
-                    "&:hover": { 
-                      bgcolor: alpha(theme.palette.common.white, 0.15),
-                    }
-                  }}
-                >
-                  Bakeries
-                </Button>
-                <Button 
-                  color="inherit" 
-                  component={Link} 
-                  to="/bags"
-                  sx={{ 
-                    "&:hover": { 
-                      bgcolor: alpha(theme.palette.common.white, 0.15),
-                    }
-                  }}
-                >
-                  Surprise Bags
-                </Button>
-              </>
-            )}
             
             <Button 
               color="inherit" 
               component={Link} 
-              to="/orders"
+              to="/bakeries"
+              startIcon={<StorefrontIcon />}
               sx={{ 
                 "&:hover": { 
                   bgcolor: alpha(theme.palette.common.white, 0.15),
                 }
               }}
             >
-              Orders
+              Bakeries
             </Button>
             
-            {showCustomerNav && (
-              <Button 
-                color="inherit" 
-                component={Link} 
-                to="/recommendations"
-                sx={{ 
-                  "&:hover": { 
-                    bgcolor: alpha(theme.palette.common.white, 0.15),
-                  }
-                }}
-              >
-                For You
-              </Button>
-            )}
+            <Button 
+              color="inherit" 
+              component={Link} 
+              to="/surplus-bags"
+              startIcon={<ShoppingBagIcon />}
+              sx={{ 
+                "&:hover": { 
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                }
+              }}
+            >
+              Surprise Bags
+            </Button>
             
-            {showCustomerNav && (
-              <IconButton
-                color="inherit"
-                component={Link}
-                to="/cart"
-                sx={{ 
-                  ml: 1,
-                  "&:hover": { 
-                    bgcolor: alpha(theme.palette.common.white, 0.15),
-                  }
-                }}
-              >
-                <Badge badgeContent={getCartCount()} color="error">
-                  <ShoppingCartIcon />
-                </Badge>
-              </IconButton>
-            )}
+            <Button 
+              color="inherit" 
+              component={Link} 
+              to="/recommendations"
+              startIcon={<RecommendIcon />}
+              sx={{ 
+                "&:hover": { 
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                }
+              }}
+            >
+              For You
+            </Button>
+            
+            <IconButton
+              color="inherit"
+              component={Link}
+              to="/cart"
+              sx={{ 
+                ml: 1,
+                "&:hover": { 
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                }
+              }}
+            >
+              <Badge badgeContent={getCartCount()} color="error">
+                <ShoppingCartIcon />
+              </Badge>
+            </IconButton>
+            
             <IconButton
               color="inherit"
               component={Link}
@@ -164,12 +137,13 @@ export default function Navbar() {
             >
               <AccountCircleIcon />
             </IconButton>
+            
             <IconButton
               color="inherit"
               onClick={handleLogout}
               sx={{ 
                 "&:hover": { 
-                  bgcolor: alpha(theme.palette.error.main, 0.2),
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
                 }
               }}
             >

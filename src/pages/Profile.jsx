@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { userApi } from "../api/userApi";
-import Layout from "../components/Layout";
+import { AuthContext } from "../context/AuthContext";
+import CustomerLayout from "../components/CustomerLayout";
+import BakeryOwnerLayout from "../components/BakeryOwnerLayout";
 import {
   Box,
   TextField,
@@ -22,6 +24,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export default function Profile() {
+  const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,41 +41,60 @@ export default function Profile() {
     }
 
     setLoading(true);
-    userApi
-      .getProfile()
-      .then((res) => {
-        console.log("Profile data received:", res.data);
-        setProfile(res.data);
+    
+    // Try to get user data from localStorage first
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setProfile(userData);
         setLoading(false);
-        setError("");
-      })
-      .catch((err) => {
-        console.error("Error loading profile:", err);
-        console.error("Error response:", err.response);
-        
-        // Check for authentication errors
-        if (err.response?.status === 401 || err.response?.status === 422) {
-          setError("Your session has expired. Please log in again.");
-          localStorage.removeItem("token");
-        } else {
-          let errorMsg = "Failed to load profile. Please try again.";
-          
-          if (err.response?.data) {
-            if (typeof err.response.data === 'string') {
-              errorMsg = err.response.data;
-            } else if (err.response.data.message) {
-              errorMsg = err.response.data.message;
-            } else if (err.response.data.msg) {
-              errorMsg = err.response.data.msg;
-            }
-          } else if (err.message) {
-            errorMsg = err.message;
-          }
-          
-          setError(String(errorMsg));
-        }
-        setLoading(false);
-      });
+        return;
+      } catch (e) {
+        console.error("Failed to parse stored user data:", e);
+      }
+    }
+
+    // If no stored user data, decode JWT token
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const tokenData = JSON.parse(jsonPayload);
+      
+      // Extract user data from token
+      const userData = {
+        id: tokenData.sub || tokenData.user_id || tokenData.id,
+        email: tokenData.email,
+        role: tokenData.role,
+        name: tokenData.name,
+        phone: tokenData.phone || "",
+        address: tokenData.address || ""
+      };
+      
+      setProfile(userData);
+      setLoading(false);
+    } catch (decodeError) {
+      console.error("Failed to decode token:", decodeError);
+      
+      // Fallback: try API call
+      userApi
+        .getProfile()
+        .then((res) => {
+          console.log("Profile data received:", res.data);
+          setProfile(res.data);
+          setLoading(false);
+          setError("");
+        })
+        .catch((err) => {
+          console.error("Error loading profile:", err);
+          setError("Failed to load profile. Please log in again.");
+          setLoading(false);
+        });
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -100,19 +122,21 @@ export default function Profile() {
   };
 
   if (loading) {
+    const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
     return (
-      <Layout>
+      <LayoutComponent>
         <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
           <CircularProgress size={60} />
           <Typography sx={{ mt: 2 }}>Loading profile...</Typography>
         </Box>
-      </Layout>
+      </LayoutComponent>
     );
   }
 
   if (error && !profile) {
+    const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
     return (
-      <Layout>
+      <LayoutComponent>
         <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
           <Alert severity="error" sx={{ maxWidth: 500, mb: 2 }}>
             {error}
@@ -124,13 +148,14 @@ export default function Profile() {
             Go to Login
           </Button>
         </Box>
-      </Layout>
+      </LayoutComponent>
     );
   }
 
   if (!profile) {
+    const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
     return (
-      <Layout>
+      <LayoutComponent>
         <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh">
           <Typography>No profile data available</Typography>
           <Button 
@@ -141,12 +166,14 @@ export default function Profile() {
             Reload
           </Button>
         </Box>
-      </Layout>
+      </LayoutComponent>
     );
   }
 
+  const LayoutComponent = user?.role === 'bakery_owner' ? BakeryOwnerLayout : CustomerLayout;
+
   return (
-    <Layout>
+    <LayoutComponent>
       <Box sx={{ maxWidth: 1000, mx: "auto", py: 4 }}>
         <Typography variant="h4" sx={{ mb: 3, fontWeight: "bold" }}>
           My Profile
@@ -328,6 +355,6 @@ export default function Profile() {
           {successMsg}
         </Alert>
       </Snackbar>
-    </Layout>
+    </LayoutComponent>
   );
 }

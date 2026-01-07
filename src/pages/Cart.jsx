@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { orderApi } from "../api/orderApi";
-import Layout from "../components/Layout";
+import CustomerLayout from "../components/CustomerLayout";
 import {
   Box,
   Typography,
@@ -174,7 +174,7 @@ export default function Cart() {
 
   if (cartItems.length === 0) {
     return (
-      <Layout>
+      <CustomerLayout>
         <Box
           sx={{
             display: "flex",
@@ -196,12 +196,12 @@ export default function Cart() {
             Browse Bakeries
           </Button>
         </Box>
-      </Layout>
+      </CustomerLayout>
     );
   }
 
   return (
-    <Layout>
+    <CustomerLayout>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: "bold" }}>
           Shopping Cart
@@ -602,6 +602,6 @@ export default function Cart() {
           </Card>
         </Grid>
       </Grid>
-    </Layout>
+    </CustomerLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { authApi } from "../api/authApi";
+import { userApi } from "../api/userApi";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Box,
@@ -34,10 +35,80 @@ export default function Login() {
 
     try {
       const res = await authApi.login(form);
-      login(res.data.access_token);
-      navigate("/dashboard");
+      const token = res.data.access_token;
+      
+      // Store token first so it can be used in the next request
+      localStorage.setItem("token", token);
+      
+      // Check if user data is in login response
+      if (res.data.user) {
+        const userData = res.data.user;
+        login(token, userData);
+        
+        // Redirect based on role
+        if (userData.role === 'admin') {
+          navigate("/admin-dashboard");
+        } else if (userData.role === 'bakery_owner') {
+          navigate("/bakery-dashboard");
+        } else {
+          navigate("/customer-dashboard");
+        }
+      } else {
+        // Decode JWT token to get user info
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const tokenData = JSON.parse(jsonPayload);
+          
+          // Extract user data from token
+          const userData = {
+            id: tokenData.sub || tokenData.user_id || tokenData.id,
+            email: tokenData.email,
+            role: tokenData.role,
+            name: tokenData.name
+          };
+          
+          login(token, userData);
+          
+          // Redirect based on role
+          if (userData.role === 'admin') {
+            navigate("/admin-dashboard");
+          } else if (userData.role === 'bakery_owner') {
+            navigate("/bakery-dashboard");
+          } else {
+            navigate("/customer-dashboard");
+          }
+        } catch (decodeError) {
+          console.error("Failed to decode token:", decodeError);
+          // Fallback: try to fetch profile
+          try {
+            const profileRes = await userApi.getProfile();
+            const userData = profileRes.data;
+            
+            login(token, userData);
+            
+            // Redirect based on role
+            if (userData.role === 'admin') {
+              navigate("/admin-dashboard");
+            } else if (userData.role === 'bakery_owner') {
+              navigate("/bakery-dashboard");
+            } else {
+              navigate("/customer-dashboard");
+            }
+          } catch (profileError) {
+            console.error("Failed to fetch profile:", profileError);
+            localStorage.removeItem("token");
+            setError("Failed to retrieve user information. Please try again.");
+          }
+        }
+      }
     } catch (err) {
       console.error("Login failed:", err);
+      localStorage.removeItem("token"); // Clean up token if login fails
       setError("Invalid credentials. Please try again.");
     }
   };

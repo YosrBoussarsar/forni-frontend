@@ -2,7 +2,7 @@
 import { surplusBagApi } from "../api/surplusBagApi";
 import { bakeryApi } from "../api/bakeryApi";
 import { CartContext } from "../context/CartContext";
-import Layout from "../components/Layout";
+import CustomerLayout from "../components/CustomerLayout";
 import {
   Box,
   Card,
@@ -122,17 +122,17 @@ export default function SurplusBags() {
 
   if (loading) {
     return (
-      <Layout>
+      <CustomerLayout>
         <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="60vh">
           <CircularProgress size={60} thickness={4} />
           <Typography sx={{ mt: 2 }} color="text.secondary">Loading surprise bags...</Typography>
         </Box>
-      </Layout>
+      </CustomerLayout>
     );
   }
 
   return (
-    <Layout>
+    <CustomerLayout>
       <Box sx={{ mb: 4 }}>
         <Typography
           variant="h3"
@@ -347,6 +347,6 @@ export default function SurplusBags() {
           ))}
         </Grid>
       )}
-    </Layout>
+    </CustomerLayout>
   );
 }

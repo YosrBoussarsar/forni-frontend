@@ -10,5 +10,9 @@ export const bakeryApi = {
     return axiosClient.get(`/bakery?${params.toString()}`);
   },
   get: (id) => axiosClient.get(`/bakery/${id}`),
+  getAll: () => axiosClient.get("/bakery"),
+  getMy: () => axiosClient.get("/bakery/my"),
   create: (data) => axiosClient.post("/bakery", data),
+  update: (id, data) => axiosClient.put(`/bakery/${id}`, data),
+  delete: (id) => axiosClient.delete(`/bakery/${id}`),
 };
