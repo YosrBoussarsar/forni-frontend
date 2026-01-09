@@ -46,27 +46,43 @@ export default function Login() {
 
     try {
       const res = await authApi.login(form);
+      console.log('Login response:', res.data);
       const token = res.data.access_token;
+      console.log('Token received:', token ? 'Yes (' + token.substring(0, 20) + '...)' : 'No');
       
       // Store token first so it can be used in the next request
       localStorage.setItem("token", token);
       
       // Check if user data is in login response
-      if (res.data.user) {
+      if (res.data.user && res.data.user.role) {
         const userData = res.data.user;
+        console.log('✓ Login successful with user data from response');
+        console.log('User role:', userData.role);
+        console.log('User data:', userData);
         login(token, userData);
         
+        // Verify localStorage after login
+        console.log('Verifying localStorage after login...');
+        console.log('Token in localStorage:', !!localStorage.getItem('token'));
+        console.log('User in localStorage:', localStorage.getItem('user'));
+        
         // Redirect based on role
+        console.log('Redirecting based on role:', userData.role);
         if (userData.role === 'admin') {
+          console.log('Navigating to /admin-dashboard');
           navigate("/admin-dashboard");
         } else if (userData.role === 'bakery_owner') {
+          console.log('Navigating to /bakery-dashboard');
           navigate("/bakery-dashboard");
         } else {
+          console.log('Navigating to /customer-dashboard');
           navigate("/customer-dashboard");
         }
       } else {
         // Decode JWT token to get user info
+        console.log('User data not in response, decoding token...');
         try {
+          console.log('Token parts:', token.split('.').length);
           const base64Url = token.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -74,6 +90,7 @@ export default function Login() {
           }).join(''));
           
           const tokenData = JSON.parse(jsonPayload);
+          console.log('Decoded token data:', tokenData);
           
           // Extract user data from token
           const userData = {
@@ -83,31 +100,99 @@ export default function Login() {
             name: tokenData.name
           };
           
+          console.log('✓ Extracted user data from token');
+          console.log('User role:', userData.role);
+          console.log('User data:', userData);
+          
+          // If role is missing from token, fetch from profile API
+          if (!userData.role) {
+            console.log('⚠️ Role missing from token, fetching user profile...');
+            try {
+              const profileRes = await userApi.getProfile();
+              const profileData = profileRes.data;
+              console.log('Profile data received:', profileData);
+              
+              // Merge profile data with token data
+              const completeUserData = {
+                id: userData.id || profileData.id,
+                email: profileData.email,
+                role: profileData.role,
+                name: profileData.name || `${profileData.first_name} ${profileData.last_name}`,
+                first_name: profileData.first_name,
+                last_name: profileData.last_name,
+                phone: profileData.phone
+              };
+              
+              console.log('✓ Complete user data:', completeUserData);
+              login(token, completeUserData);
+              
+              // Redirect based on role from profile
+              console.log('Redirecting based on role:', completeUserData.role);
+              if (completeUserData.role === 'admin') {
+                console.log('Navigating to /admin-dashboard');
+                navigate("/admin-dashboard");
+              } else if (completeUserData.role === 'bakery_owner') {
+                console.log('Navigating to /bakery-dashboard');
+                navigate("/bakery-dashboard");
+              } else {
+                console.log('Navigating to /customer-dashboard');
+                navigate("/customer-dashboard");
+              }
+              return; // Exit early after successful profile fetch
+            } catch (profileError) {
+              console.error("Failed to fetch profile:", profileError);
+              localStorage.removeItem("token");
+              setError("Failed to retrieve user information. Please try again.");
+              return;
+            }
+          }
+          
           login(token, userData);
           
+          // Verify localStorage after login
+          console.log('Verifying localStorage after login...');
+          console.log('Token in localStorage:', !!localStorage.getItem('token'));
+          console.log('User in localStorage:', localStorage.getItem('user'));
+          
           // Redirect based on role
+          console.log('Redirecting based on role:', userData.role);
           if (userData.role === 'admin') {
+            console.log('Navigating to /admin-dashboard');
             navigate("/admin-dashboard");
           } else if (userData.role === 'bakery_owner') {
+            console.log('Navigating to /bakery-dashboard');
             navigate("/bakery-dashboard");
           } else {
+            console.log('Navigating to /customer-dashboard');
             navigate("/customer-dashboard");
           }
         } catch (decodeError) {
           console.error("Failed to decode token:", decodeError);
           // Fallback: try to fetch profile
           try {
+            console.log('Fetching user profile as fallback...');
             const profileRes = await userApi.getProfile();
             const userData = profileRes.data;
+            console.log('Profile data received:', userData);
+            console.log('User role from profile:', userData.role);
             
             login(token, userData);
             
+            // Verify localStorage after login
+            console.log('Verifying localStorage after login...');
+            console.log('Token in localStorage:', !!localStorage.getItem('token'));
+            console.log('User in localStorage:', localStorage.getItem('user'));
+            
             // Redirect based on role
+            console.log('Redirecting based on role:', userData.role);
             if (userData.role === 'admin') {
+              console.log('Navigating to /admin-dashboard');
               navigate("/admin-dashboard");
             } else if (userData.role === 'bakery_owner') {
+              console.log('Navigating to /bakery-dashboard');
               navigate("/bakery-dashboard");
             } else {
+              console.log('Navigating to /customer-dashboard');
               navigate("/customer-dashboard");
             }
           } catch (profileError) {

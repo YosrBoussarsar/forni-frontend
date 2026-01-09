@@ -8,14 +8,27 @@ export function AuthProvider({ children }) {
   );
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        console.log('Restored user from localStorage:', parsed);
+        return parsed;
+      } catch (e) {
+        console.error('Failed to parse saved user data:', e);
+        return null;
+      }
+    }
+    return null;
   });
 
   const login = (token, userData) => {
+    console.log('AuthContext.login called with userData:', userData);
     setAccessToken(token);
     setUser(userData);
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
+    // Verify storage
+    console.log('Stored in localStorage - token:', !!token, 'user role:', userData?.role);
   };
 
   const logout = () => {

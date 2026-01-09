@@ -76,7 +76,26 @@ export default function ManageBakery() {
       setSaving(false);
     } catch (err) {
       console.error("Error saving bakery:", err);
-      setError("Failed to save bakery information. Please try again.");
+      console.error("Error response:", err.response?.data);
+      
+      // Extract detailed error message from backend
+      let errorMessage = "Failed to save bakery information. Please try again.";
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.data.msg) {
+          errorMessage = err.response.data.msg;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        }
+      }
+      
+      setError(errorMessage);
       setSaving(false);
     }
   };
@@ -113,7 +132,23 @@ export default function ManageBakery() {
         <Card>
           <CardContent sx={{ p: 4 }}>
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  '& .MuiAlert-message': {
+                    width: '100%',
+                    userSelect: 'text',
+                    fontFamily: 'monospace',
+                    fontSize: '0.9rem',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }
+                }}
+              >
+                <Typography component="div" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Error from backend:
+                </Typography>
                 {error}
               </Alert>
             )}
