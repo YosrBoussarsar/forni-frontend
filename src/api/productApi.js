@@ -13,4 +13,8 @@ export const productApi = {
   create: (data) => axiosClient.post("/product", data),
   update: (id, data) => axiosClient.put(`/product/${id}`, data),
   delete: (id) => axiosClient.delete(`/product/${id}`),
+  getRecommendations: (excludeBakeryId) => 
+    axiosClient.get(`/product/recommendations?exclude_bakery_id=${excludeBakeryId}`),
+  createFromTemplate: (templateId, data) => 
+    axiosClient.post(`/product/from-template/${templateId}`, data),
 };

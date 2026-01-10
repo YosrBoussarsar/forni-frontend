@@ -27,6 +27,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 export default function Bakeries() {
   const [bakeries, setBakeries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchTags, setSearchTags] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [bakeryRatings, setBakeryRatings] = useState({});
@@ -34,13 +35,21 @@ export default function Bakeries() {
 
   const popularTags = ["croissant", "bread", "pastry", "cake", "sandwich"];
 
-  const loadBakeries = async (tags = []) => {
+  const loadBakeries = async (tags = [], nameQuery = "") => {
     setLoading(true);
     const apiCall = tags.length > 0 ? bakeryApi.listByProductTags(tags) : bakeryApi.list();
     
     try {
       const res = await apiCall;
-      const bakeriesData = res.data;
+      let bakeriesData = res.data;
+      
+      // Filter by bakery name if search query exists
+      if (nameQuery && nameQuery.trim()) {
+        bakeriesData = bakeriesData.filter(bakery => 
+          bakery.name.toLowerCase().includes(nameQuery.toLowerCase())
+        );
+      }
+      
       setBakeries(bakeriesData);
       
       // Load reviews for each bakery to calculate ratings
@@ -81,17 +90,18 @@ export default function Bakeries() {
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
     setSelectedTags(tags);
-    loadBakeries(tags);
+    loadBakeries(tags, searchQuery);
   };
 
   const handleTagClick = (tag) => {
     const tags = [tag];
     setSelectedTags(tags);
     setSearchTags(tag);
-    loadBakeries(tags);
+    loadBakeries(tags, searchQuery);
   };
 
   const handleClearFilters = () => {
+    setSearchQuery("");
     setSearchTags("");
     setSelectedTags([]);
     loadBakeries([]);
@@ -135,6 +145,41 @@ export default function Bakeries() {
 
         {/* Search Box */}
         <Box sx={{ mt: 3, mb: 2 }}>
+          <TextField
+            fullWidth
+            placeholder="Search by bakery name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  {(searchQuery || searchTags || selectedTags.length > 0) && (
+                    <IconButton size="small" onClick={handleClearFilters}>
+                      <ClearIcon />
+                    </IconButton>
+                  )}
+                  <IconButton color="primary" onClick={handleSearch}>
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: alpha(theme.palette.background.paper, 0.8),
+              },
+            }}
+          />
+        </Box>
+
+        {/* Product Tags Search */}
+        <Box sx={{ mt: 2, mb: 2 }}>
           <TextField
             fullWidth
             placeholder="Search by products: croissant, bread, pastry..."
@@ -197,10 +242,12 @@ export default function Bakeries() {
         </Box>
 
         {/* Active Filters Display */}
-        {selectedTags.length > 0 && (
+        {(selectedTags.length > 0 || searchQuery) && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              Filtering by: {selectedTags.join(", ")}
+              {searchQuery && `Bakery name: "${searchQuery}"`}
+              {searchQuery && selectedTags.length > 0 && " | "}
+              {selectedTags.length > 0 && `Products: ${selectedTags.join(", ")}`}
             </Typography>
           </Box>
         )}
@@ -210,11 +257,11 @@ export default function Bakeries() {
         <Box sx={{ textAlign: "center", py: 8 }}>
           <StorefrontIcon sx={{ fontSize: 80, color: "text.secondary", mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
-            {selectedTags.length > 0
-              ? "No bakeries found with these products"
+            {selectedTags.length > 0 || searchQuery
+              ? "No bakeries found with these search criteria"
               : "No bakeries available at the moment"}
           </Typography>
-          {selectedTags.length > 0 && (
+          {(selectedTags.length > 0 || searchQuery) && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Try different search terms or{" "}
               <Typography

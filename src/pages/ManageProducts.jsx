@@ -24,17 +24,24 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InventoryIcon from "@mui/icons-material/Inventory";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [bakery, setBakery] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +50,7 @@ export default function ManageProducts() {
     name: "",
     description: "",
     price: "",
-    quantity_available: "",
+    is_available: true,
     tags: "",
     image_url: "",
   });
@@ -74,7 +81,7 @@ export default function ManageProducts() {
         name: product.name || "",
         description: product.description || "",
         price: product.price || "",
-        quantity_available: product.quantity_available || "",
+        is_available: product.is_available !== undefined ? product.is_available : true,
         tags: Array.isArray(product.tags) ? product.tags.join(", ") : product.tags || "",
         image_url: product.image_url || "",
       });
@@ -84,7 +91,7 @@ export default function ManageProducts() {
         name: "",
         description: "",
         price: "",
-        quantity_available: "",
+        is_available: true,
         tags: "",
         image_url: "",
       });
@@ -112,16 +119,17 @@ export default function ManageProducts() {
     try {
       const submitData = {
         ...formData,
-        bakery_id: bakery.id,
         price: parseFloat(formData.price),
-        quantity_available: parseInt(formData.quantity_available),
+        is_available: formData.is_available,
         tags: formData.tags,
       };
 
       if (editingProduct) {
+        // When updating, don't send bakery_id
         await productApi.update(editingProduct.id, submitData);
       } else {
-        await productApi.create(submitData);
+        // When creating, include bakery_id
+        await productApi.create({ ...submitData, bakery_id: bakery.id });
       }
 
       await loadData();
@@ -144,6 +152,46 @@ export default function ManageProducts() {
     } catch (err) {
       console.error("Error deleting product:", err);
       alert("Failed to delete product");
+    }
+  };
+
+  const handleLoadTemplates = async () => {
+    console.log("Loading templates...");
+    setLoadingTemplates(true);
+    setDialogOpen(false); // Ensure custom product dialog is closed
+    try {
+      const response = await productApi.getRecommendations(bakery.id);
+      console.log("Templates loaded:", response.data.recommendations);
+      setRecommendations(response.data.recommendations || []);
+      setTemplatesDialogOpen(true);
+      console.log("Templates dialog opened");
+    } catch (err) {
+      console.error("Error loading templates:", err);
+      alert("Failed to load product templates");
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const handleAddFromTemplate = async (template) => {
+    const price = prompt(
+      `Enter your price for "${template.name}" (Average: ${template.avg_price || 'N/A'} TND):`
+    );
+    if (!price) return;
+
+    try {
+      await productApi.createFromTemplate(template.template_product_id, {
+        bakery_id: bakery.id,
+        price: parseFloat(price),
+        is_available: true,
+      });
+      
+      await loadData();
+      setTemplatesDialogOpen(false);
+      alert(`Product "${template.name}" added successfully!`);
+    } catch (err) {
+      console.error("Error adding from template:", err);
+      alert(err.response?.data?.message || "Failed to add product from template");
     }
   };
 
@@ -183,13 +231,23 @@ export default function ManageProducts() {
                 </Typography>
               </Box>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog()}
-            >
-              Add Product
-            </Button>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<ContentCopyIcon />}
+                onClick={handleLoadTemplates}
+                disabled={loadingTemplates}
+              >
+                {loadingTemplates ? "Loading..." : "Product Templates"}
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog()}
+              >
+                Add Custom Product
+              </Button>
+            </Box>
           </Box>
         </Paper>
 
@@ -204,7 +262,7 @@ export default function ManageProducts() {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>Price (TND)</TableCell>
-                  <TableCell>Available</TableCell>
+                  <TableCell>Status</TableCell>
                   <TableCell>Tags</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -221,12 +279,25 @@ export default function ManageProducts() {
                       </Typography>
                     </TableCell>
                     <TableCell>{product.price}</TableCell>
-                    <TableCell>{product.quantity_available}</TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 1,
+                          bgcolor: product.is_available ? "#E8F5E9" : "#FFEBEE",
+                          color: product.is_available ? "#2E7D32" : "#C62828",
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {product.is_available ? "Available" : "Not Available"}
+                      </Box>
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {Array.isArray(product.tags) 
-                          ? product.tags.join(", ") 
-                          : product.tags || "—"}
+                        {product.tags || "—"}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
@@ -295,15 +366,17 @@ export default function ManageProducts() {
                   />
                 </Grid>
                 <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="number"
-                    label="Quantity Available"
-                    name="quantity_available"
-                    value={formData.quantity_available}
-                    onChange={handleChange}
-                    inputProps={{ min: "0" }}
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.is_available}
+                        onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })}
+                        name="is_available"
+                        color="success"
+                      />
+                    }
+                    label={formData.is_available ? "Available" : "Not Available"}
+                    sx={{ mt: 2 }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -338,6 +411,135 @@ export default function ManageProducts() {
             >
               {saving ? <CircularProgress size={24} /> : "Save"}
             </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Templates Dialog */}
+        <Dialog 
+          open={templatesDialogOpen} 
+          onClose={() => setTemplatesDialogOpen(false)} 
+          maxWidth="md" 
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ContentCopyIcon />
+              Product Templates
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Choose from popular products used by other bakeries. You'll set your own price and quantity.
+            </Typography>
+            
+            {recommendations.length === 0 ? (
+              <Alert severity="info">
+                No templates available yet. Create your first products!
+              </Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {recommendations.map((template) => (
+                  <Grid item xs={12} sm={6} key={template.template_product_id}>
+                    <Card 
+                      elevation={2} 
+                      sx={{ 
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        "&:hover": { boxShadow: 4 }
+                      }}
+                    >
+                      {template.image_url && (
+                        <Box
+                          component="img"
+                          src={`http://localhost:5000${template.image_url}`}
+                          alt={template.name}
+                          sx={{
+                            width: "100%",
+                            height: 150,
+                            objectFit: "cover",
+                          }}
+                        />
+                      )}
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" gutterBottom>
+                          {template.name}
+                        </Typography>
+                        
+                        <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap" }}>
+                          {template.category && (
+                            <Box
+                              sx={{
+                                bgcolor: "#E8F5E9",
+                                color: "#2E7D32",
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: "0.75rem",
+                              }}
+                            >
+                              {template.category}
+                            </Box>
+                          )}
+                          <Box
+                            sx={{
+                              bgcolor: "#FFF3E0",
+                              color: "#E65100",
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                              fontSize: "0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <LocalFireDepartmentIcon sx={{ fontSize: 14 }} />
+                            {template.popularity} bakeries
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {template.description}
+                        </Typography>
+
+                        {template.avg_price && (
+                          <Typography variant="body2" color="text.secondary">
+                            Avg price: <strong>{template.avg_price} TND</strong>
+                          </Typography>
+                        )}
+
+                        {template.allergens && (
+                          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                            ⚠️ {template.allergens}
+                          </Typography>
+                        )}
+
+                        {template.tags && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                            Tags: {template.tags}
+                          </Typography>
+                        )}
+
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          color="success"
+                          startIcon={<AddIcon />}
+                          onClick={() => handleAddFromTemplate(template)}
+                          sx={{ mt: 2 }}
+                        >
+                          Add to My Bakery
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setTemplatesDialogOpen(false)}>Close</Button>
           </DialogActions>
         </Dialog>
       </Box>

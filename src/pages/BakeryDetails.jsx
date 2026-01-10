@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { reviewApi } from "../api/reviewApi";
 import { CartContext } from "../context/CartContext";
@@ -28,9 +28,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import StarIcon from "@mui/icons-material/Star";
 import PersonIcon from "@mui/icons-material/Person";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function BakeryDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [bakery, setBakery] = useState(null);
   const [loading, setLoading] = useState(true);
   const [productSearchTags, setProductSearchTags] = useState("");
@@ -211,6 +213,23 @@ export default function BakeryDetails() {
 
   return (
     <CustomerLayout>
+      {/* Back Button */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/bakeries")}
+          sx={{
+            color: "text.secondary",
+            "&:hover": {
+              color: "primary.main",
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+            },
+          }}
+        >
+          Back to Bakeries
+        </Button>
+      </Box>
+
       <Box sx={{ mb: 4 }}>
         <Typography
           variant="h3"

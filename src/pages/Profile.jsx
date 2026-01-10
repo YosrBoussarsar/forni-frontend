@@ -22,10 +22,15 @@ import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 export default function Profile() {
   const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
+  const [originalProfile, setOriginalProfile] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,6 +81,7 @@ export default function Profile() {
       };
       
       setProfile(userData);
+      setOriginalProfile(userData);
       setLoading(false);
     } catch (decodeError) {
       console.error("Failed to decode token:", decodeError);
@@ -86,6 +92,7 @@ export default function Profile() {
         .then((res) => {
           console.log("Profile data received:", res.data);
           setProfile(res.data);
+          setOriginalProfile(res.data);
           setLoading(false);
           setError("");
         })
@@ -101,6 +108,16 @@ export default function Profile() {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
+  const handleEdit = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancel = () => {
+    setProfile(originalProfile);
+    setIsEditMode(false);
+    setError("");
+  };
+
   const handleSave = () => {
     setSaving(true);
     setError("");
@@ -108,6 +125,8 @@ export default function Profile() {
       .updateProfile(profile)
       .then(() => {
         setSaving(false);
+        setOriginalProfile(profile);
+        setIsEditMode(false);
         setSuccessMsg("Profile updated successfully!");
       })
       .catch((err) => {
@@ -175,9 +194,20 @@ export default function Profile() {
   return (
     <LayoutComponent>
       <Box sx={{ maxWidth: 1000, mx: "auto", py: 4 }}>
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: "bold" }}>
-          My Profile
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            My Profile
+          </Typography>
+          {!isEditMode && (
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+            >
+              Edit Profile
+            </Button>
+          )}
+        </Box>
 
         <Grid container spacing={3}>
           {/* Profile Summary Card */}
@@ -246,6 +276,7 @@ export default function Profile() {
                     name="first_name"
                     value={profile.first_name || ""}
                     onChange={handleChange}
+                    disabled={!isEditMode}
                     InputProps={{
                       startAdornment: <PersonIcon sx={{ mr: 1, color: "action.active" }} />,
                     }}
@@ -259,6 +290,7 @@ export default function Profile() {
                     name="last_name"
                     value={profile.last_name || ""}
                     onChange={handleChange}
+                    disabled={!isEditMode}
                     InputProps={{
                       startAdornment: <PersonIcon sx={{ mr: 1, color: "action.active" }} />,
                     }}
@@ -286,6 +318,7 @@ export default function Profile() {
                     name="phone"
                     value={profile.phone || ""}
                     onChange={handleChange}
+                    disabled={!isEditMode}
                     placeholder="12345678"
                     InputProps={{
                       startAdornment: <PhoneIcon sx={{ mr: 1, color: "action.active" }} />,
@@ -302,6 +335,7 @@ export default function Profile() {
                     type="number"
                     value={profile.latitude || ""}
                     onChange={handleChange}
+                    disabled={!isEditMode}
                     InputProps={{
                       startAdornment: <LocationOnIcon sx={{ mr: 1, color: "action.active" }} />,
                     }}
@@ -316,6 +350,7 @@ export default function Profile() {
                     type="number"
                     value={profile.longitude || ""}
                     onChange={handleChange}
+                    disabled={!isEditMode}
                     InputProps={{
                       startAdornment: <LocationOnIcon sx={{ mr: 1, color: "action.active" }} />,
                     }}
@@ -324,20 +359,26 @@ export default function Profile() {
 
                 <Grid item xs={12}>
                   <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => window.location.reload()}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleSave}
-                      disabled={saving}
-                      size="large"
-                    >
-                      {saving ? "Saving..." : "Save Changes"}
-                    </Button>
+                    {isEditMode ? (
+                      <>
+                        <Button
+                          variant="outlined"
+                          startIcon={<CancelIcon />}
+                          onClick={handleCancel}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="contained"
+                          startIcon={<SaveIcon />}
+                          onClick={handleSave}
+                          disabled={saving}
+                          size="large"
+                        >
+                          {saving ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </>
+                    ) : null}
                   </Box>
                 </Grid>
               </Grid>

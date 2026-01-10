@@ -55,6 +55,7 @@ export default function ManageSurplusBags() {
       setBakery(bakeryRes.data);
       
       const bagsRes = await surplusBagApi.listByBakery(bakeryRes.data.id);
+      console.log('Surplus bags data:', bagsRes.data);
       setBags(bagsRes.data);
       setLoading(false);
     } catch (err) {
@@ -74,9 +75,9 @@ export default function ManageSurplusBags() {
       setFormData({
         title: bag.title || "",
         description: bag.description || "",
-        original_price: bag.original_price || "",
+        original_price: bag.original_value || bag.original_price || "",
         sale_price: bag.sale_price || "",
-        quantity: bag.quantity || "",
+        quantity: bag.quantity_available || bag.quantity || "",
         pickup_time: bag.pickup_time || "",
         tags: Array.isArray(bag.tags) ? bag.tags.join(", ") : bag.tags || "",
       });
@@ -115,7 +116,6 @@ export default function ManageSurplusBags() {
     try {
       const submitData = {
         ...formData,
-        bakery_id: bakery.id,
         original_price: parseFloat(formData.original_price),
         sale_price: parseFloat(formData.sale_price),
         quantity: parseInt(formData.quantity),
@@ -123,9 +123,11 @@ export default function ManageSurplusBags() {
       };
 
       if (editingBag) {
+        // When updating, don't send bakery_id
         await surplusBagApi.update(editingBag.id, submitData);
       } else {
-        await surplusBagApi.create(submitData);
+        // When creating, include bakery_id
+        await surplusBagApi.create({ ...submitData, bakery_id: bakery.id });
       }
 
       await loadData();
@@ -225,13 +227,13 @@ export default function ManageSurplusBags() {
                         {bag.description}
                       </Typography>
                     </TableCell>
-                    <TableCell>{bag.original_price} TND</TableCell>
+                    <TableCell>{bag.original_value || bag.original_price || "—"} TND</TableCell>
                     <TableCell>
                       <Typography color="success.main" fontWeight="bold">
                         {bag.sale_price} TND
                       </Typography>
                     </TableCell>
-                    <TableCell>{bag.quantity}</TableCell>
+                    <TableCell>{bag.quantity_available || bag.quantity || "—"}</TableCell>
                     <TableCell>{bag.pickup_time || "—"}</TableCell>
                     <TableCell align="right">
                       <IconButton
