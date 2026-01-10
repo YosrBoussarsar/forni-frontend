@@ -9,6 +9,8 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import RecommendIcon from "@mui/icons-material/Recommend";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 export default function CustomerNavbar() {
   const theme = useTheme();
@@ -107,6 +109,34 @@ export default function CustomerNavbar() {
               }}
             >
               For You
+            </Button>
+
+            <Button 
+              color="inherit" 
+              component={Link} 
+              to="/orders"
+              startIcon={<ListAltIcon />}
+              sx={{ 
+                "&:hover": { 
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                }
+              }}
+            >
+              Orders
+            </Button>
+
+            <Button 
+              color="inherit" 
+              component={Link} 
+              to="/products"
+              startIcon={<LocalOfferIcon />}
+              sx={{ 
+                "&:hover": { 
+                  bgcolor: alpha(theme.palette.common.white, 0.15),
+                }
+              }}
+            >
+              Products
             </Button>
             
             <IconButton

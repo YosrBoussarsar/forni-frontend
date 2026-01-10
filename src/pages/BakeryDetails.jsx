@@ -344,16 +344,22 @@ export default function BakeryDetails() {
                     <Typography variant="h6" fontWeight="bold" gutterBottom>
                       {p.name}
                     </Typography>
-                    <Chip
-                      label={`${p.price} TND`}
-                      size="small"
-                      sx={{
-                        bgcolor: theme.palette.primary.main,
-                        color: "white",
-                        fontWeight: 600,
-                        mb: 2,
-                      }}
-                    />
+                    <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                      <Chip
+                        label={`${p.price} TND`}
+                        size="small"
+                        sx={{
+                          bgcolor: theme.palette.primary.main,
+                          color: "white",
+                          fontWeight: 600,
+                        }}
+                      />
+                      <Chip
+                        label={p.is_available ? "Available" : "Not Available"}
+                        color={p.is_available ? "success" : "error"}
+                        size="small"
+                      />
+                    </Stack>
                     {p.description && (
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         {p.description}

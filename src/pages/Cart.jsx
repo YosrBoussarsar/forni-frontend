@@ -54,6 +54,8 @@ export default function Cart() {
   };
 
   const handleCheckout = async () => {
+    console.log("Checkout clicked, cart items:", cartItems);
+    
     if (cartItems.length === 0) {
       setError("Your cart is empty");
       return;
@@ -62,11 +64,13 @@ export default function Cart() {
     // Validate cart items have required fields
     const invalidItems = cartItems.filter(item => !item.bakery_id || !item.bakery_name);
     if (invalidItems.length > 0) {
+      console.log("Invalid items found:", invalidItems);
       setError("Some items in your cart are missing bakery information. Please remove them and add them again from the bakery page.");
       return;
     }
 
     setError("");
+    console.log("Opening payment dialog, USE_MOCK_PAYMENT:", USE_MOCK_PAYMENT);
 
     if (USE_MOCK_PAYMENT) {
       // Mock payment flow - just open the dialog

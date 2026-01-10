@@ -18,6 +18,7 @@ import Cart from "./pages/Cart";
 import ManageBakery from "./pages/ManageBakery";
 import ManageProducts from "./pages/ManageProducts";
 import ManageSurplusBags from "./pages/ManageSurplusBags";
+import Products from "./pages/Products";
 import BakeryAnalytics from "./pages/BakeryAnalytics";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -48,6 +49,7 @@ function App() {
               <Route path="/orders" element={<Orders />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/products" element={<Products />} />
               
               {/* Bakery Owner routes */}
               <Route path="/manage-bakery" element={<ManageBakery />} />

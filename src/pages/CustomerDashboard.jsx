@@ -18,6 +18,7 @@ import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import RecommendIcon from "@mui/icons-material/Recommend";
 import SavingsIcon from "@mui/icons-material/Savings";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { orderApi } from "../api/orderApi";
 
@@ -62,6 +63,12 @@ export default function CustomerDashboard() {
   }, [user]);
 
   const quickActions = [
+        {
+          title: "Products",
+          description: "Compare prices across bakeries",
+          icon: <ShoppingCartIcon sx={{ fontSize: 40, color: "#1976D2" }} />,
+          path: "/products",
+        },
     {
       title: "Browse Bakeries",
       description: "Discover local bakeries and their offerings",
